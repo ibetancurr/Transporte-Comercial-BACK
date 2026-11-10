@@ -10,8 +10,15 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 150 })
   nombre: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  // Legacy document login and mobile email login share this unique identifier.
+  @Column({ type: 'varchar', length: 254, unique: true })
   documento: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  preguntaSeguridad?: string;
+
+  @Column({ type: 'varchar', nullable: true, select: false })
+  respuestaHash?: string;
 
   @Column({
     type: 'enum',
