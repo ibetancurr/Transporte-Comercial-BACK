@@ -4,6 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { MobileRegisterDto } from './dto/mobile-auth.dto';
+import { UserRole } from '../shared/types';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +13,38 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
+
+  async registerMobile(dto: MobileRegisterDto) {
+    const correo = dto.correo.trim().toLowerCase();
+    if (await this.usersService.findByDocument(correo)) throw new ConflictException('Este correo ya está registrado');
+    const user = await this.usersService.create({
+      nombre: dto.nombre.trim(), documento: correo, rol: UserRole.DRIVER,
+      passwordHash: await bcrypt.hash(dto.contrasena, 10),
+      preguntaSeguridad: dto.preguntaSeguridad.trim(),
+      respuestaHash: await bcrypt.hash(dto.respuestaSeguridad.trim().toLowerCase(), 10),
+    });
+    return { usuario: { id: user.id, nombre: user.nombre, correo }, token: this.generateToken(user.id, user.documento, user.rol) };
+  }
+
+  async mobileQuestion(correo: string) {
+    const user = await this.usersService.findByDocument(correo.trim().toLowerCase());
+    if (!user?.preguntaSeguridad) throw new UnauthorizedException('No se pudo recuperar la cuenta');
+    return { pregunta: user.preguntaSeguridad };
+  }
+
+  async verifyMobileAnswer(correo: string, respuesta: string) {
+    const user = await this.usersService.findByDocument(correo.trim().toLowerCase());
+    if (!user?.respuestaHash || !await bcrypt.compare(respuesta.trim().toLowerCase(), user.respuestaHash)) {
+      throw new UnauthorizedException('La respuesta de seguridad no es correcta');
+    }
+    return user;
+  }
+
+  async resetMobilePassword(correo: string, respuesta: string, password: string) {
+    const user = await this.verifyMobileAnswer(correo, respuesta);
+    await this.usersService.updatePassword(user.id, await bcrypt.hash(password, 10));
+    return { ok: true };
+  }
 
   async register(registerDto: RegisterDto) {
     const existing = await this.usersService.findByDocument(registerDto.documento);

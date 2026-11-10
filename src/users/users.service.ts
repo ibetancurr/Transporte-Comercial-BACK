@@ -13,7 +13,7 @@ export class UsersService {
   async findByDocument(documento: string): Promise<UserEntity | null> {
     return this.usersRepository.findOne({
       where: { documento },
-      select: ['id', 'nombre', 'documento', 'rol', 'passwordHash', 'creadoEn'],
+      select: ['id', 'nombre', 'documento', 'rol', 'passwordHash', 'creadoEn', 'preguntaSeguridad', 'respuestaHash'],
     });
   }
 
@@ -28,5 +28,9 @@ export class UsersService {
   async create(data: Partial<UserEntity>): Promise<UserEntity> {
     const user = this.usersRepository.create(data);
     return this.usersRepository.save(user);
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.usersRepository.update(id, { passwordHash });
   }
 }
