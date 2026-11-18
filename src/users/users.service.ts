@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
+import { UserRole } from '../shared/types';
 
 @Injectable()
 export class UsersService {
@@ -9,6 +10,14 @@ export class UsersService {
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
   ) {}
+
+  async findDrivers(): Promise<Array<{ id: string; nombre: string; documento: string; rol: string }>> {
+    return this.usersRepository.find({
+      where: { rol: UserRole.DRIVER },
+      select: ['id', 'nombre', 'documento', 'rol'],
+      order: { nombre: 'ASC' },
+    });
+  }
 
   async findByDocument(documento: string): Promise<UserEntity | null> {
     return this.usersRepository.findOne({

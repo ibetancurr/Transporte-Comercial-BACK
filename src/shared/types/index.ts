@@ -10,6 +10,7 @@ export enum UserRole {
 export enum RouteStatus {
   PENDING = 'pendiente',
   IN_TRANSIT = 'en_ruta',
+  SUSPENDED = 'en_suspension',
   COMPLETED = 'completada',
   DELAYED = 'retrasada',
   CANCELLED = 'cancelada',

@@ -52,3 +52,9 @@ export class CreateRouteDto {
   @ApiProperty({ type: () => [SegmentDto], required: false })
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => SegmentDto) tramos?: SegmentDto[];
 }
+
+export class UpdateRouteStatusDto {
+  @ApiProperty({ enum: RouteStatus })
+  @IsEnum(RouteStatus)
+  estado: RouteStatus;
+}
