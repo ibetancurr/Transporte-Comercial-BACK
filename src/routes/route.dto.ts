@@ -26,6 +26,8 @@ export class SegmentDto {
 
 export class CreateRouteDto {
   @ApiProperty({ required: false })
+  @IsOptional() @IsUUID() conductorId?: string;
+  @ApiProperty({ required: false })
   @IsOptional() @IsString() codigoManifiesto?: string;
   @ApiProperty()
   @IsString() @IsNotEmpty() origenNombre: string;

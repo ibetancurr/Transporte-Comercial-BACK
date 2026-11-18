@@ -9,7 +9,10 @@ import { CreateRouteDto } from './route.dto';
 @ApiTags('Rutas') @ApiBearerAuth() @UseGuards(JwtAuthGuard) @Controller('routes')
 export class RoutesController {
   constructor(private readonly routes: RoutesService) {}
-  @Get() list(@Req() req: Request) { return this.routes.list((req.user as UserEntity).id); }
+  @Get() list(@Req() req: Request) {
+    const user = req.user as UserEntity;
+    return this.routes.list(user.id, user.rol);
+  }
   @Post() create(@Body() dto: CreateRouteDto, @Req() req: Request) { return this.routes.create(dto, (req.user as UserEntity).id); }
   @Get(':id') get(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) { return this.routes.findOwned(id, (req.user as UserEntity).id); }
 }

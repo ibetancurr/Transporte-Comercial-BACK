@@ -19,7 +19,7 @@ export class AuthController {
   @Post('mobile/login') @HttpCode(HttpStatus.OK)
   async mobileLogin(@Body() dto: MobileLoginDto) {
     const result = await this.authService.login({ documento: dto.correo.trim().toLowerCase(), password: dto.contrasena });
-    return { token: result.token, usuario: { id: result.usuario.id, nombre: result.usuario.nombre, correo: result.usuario.documento } };
+    return { token: result.token, usuario: { id: result.usuario.id, nombre: result.usuario.nombre, correo: result.usuario.documento, rol: result.usuario.rol } };
   }
 
   @Get('me') @UseGuards(JwtAuthGuard)
