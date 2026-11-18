@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RouteEntity } from './entities/route.entity';
@@ -47,6 +47,22 @@ export class RoutesService {
     const where = user.rol === 'operador' ? { id } : { id, usuarioId: user.id };
     const route = await this.routes.findOne({ where, relations: ['usuario'] });
     if (!route) throw new NotFoundException('Ruta no encontrada o no autorizada');
+
+    // Regla de negocio: un conductor solo puede tener 1 viaje en curso a la vez
+    if (estado === RouteStatus.IN_TRANSIT) {
+      const activeTrip = await this.routes.findOne({
+        where: [
+          { usuarioId: route.usuarioId, estado: RouteStatus.IN_TRANSIT },
+          { usuarioId: route.usuarioId, estado: RouteStatus.SUSPENDED },
+        ],
+      });
+      if (activeTrip && activeTrip.id !== id) {
+        throw new BadRequestException(
+          `El conductor ya tiene un viaje activo en curso (${activeTrip.codigoManifiesto || activeTrip.origenNombre + ' → ' + activeTrip.destinoNombre}). Debe finalizarlo antes de iniciar uno nuevo.`,
+        );
+      }
+    }
+
     route.estado = estado;
     return this.routes.save(route);
   }

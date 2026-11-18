@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
-import { UserRole } from '../shared/types';
+import { UserRole, RouteStatus } from '../shared/types';
 
 @Injectable()
 export class UsersService {
@@ -11,11 +11,38 @@ export class UsersService {
     private readonly usersRepository: Repository<UserEntity>,
   ) {}
 
-  async findDrivers(): Promise<Array<{ id: string; nombre: string; documento: string; rol: string }>> {
-    return this.usersRepository.find({
+  async findDrivers(): Promise<Array<{
+    id: string;
+    nombre: string;
+    documento: string;
+    rol: string;
+    viajeActivo?: { id: string; codigoManifiesto?: string; origen: string; destino: string; estado: string } | null;
+  }>> {
+    const drivers = await this.usersRepository.find({
       where: { rol: UserRole.DRIVER },
-      select: ['id', 'nombre', 'documento', 'rol'],
+      relations: ['rutas'],
       order: { nombre: 'ASC' },
+    });
+
+    return drivers.map((d) => {
+      const active = d.rutas?.find(
+        (r) => r.estado === RouteStatus.IN_TRANSIT || r.estado === RouteStatus.SUSPENDED,
+      );
+      return {
+        id: d.id,
+        nombre: d.nombre,
+        documento: d.documento,
+        rol: d.rol,
+        viajeActivo: active
+          ? {
+              id: active.id,
+              codigoManifiesto: active.codigoManifiesto,
+              origen: active.origenNombre,
+              destino: active.destinoNombre,
+              estado: active.estado,
+            }
+          : null,
+      };
     });
   }
 
